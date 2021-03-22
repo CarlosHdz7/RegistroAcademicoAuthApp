@@ -1,0 +1,138 @@
+﻿
+@inject NavigationManager navManager
+
+@if (lista == null)
+{
+    @if (MostrarEspera)
+    {
+        <h1>Cargando....</h1>
+    }
+}
+else
+{
+
+
+    @if (AgregarOpt)
+    {
+        <div class="form-group">
+            <NavLink href="@rtaAgregar">
+                <button class="btn btn-primary">Agregar</button>
+            </NavLink>
+        </div>
+    }
+    <div class="mb-4">
+        <label class="form-group">Buscar</label>
+        <input type="text" class="form-check form-control"
+               @bind-value="filtro"
+               @bind-value:event="oninput"
+               @onkeyup="Busqueda" />
+    </div>
+    <table class="table">
+        <thead>
+            <tr>
+                @foreach (var item in cabeceras)
+                {
+                    <td>@item</td>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (object obj in lista)
+            {
+                <tr>
+                    @foreach (var prop in obj.GetType().GetProperties())
+                    {
+                        <td>@prop.GetValue(obj)</td>
+                    }
+                    <td>
+                        <button class="btn btn-danger fa fa-trash"
+                                data-toggle="modal" data-target="#dlgEliminar"
+                                @onclick="@(()=>OptEliminar(@obj.GetType().GetProperties()[0].GetValue(@obj).ToString()))">
+                        </button>
+
+                        @if (EditarOpt)
+                        {
+
+                            <button class="btn btn-info fa fa-edit"
+                                    @onclick="@(()=>OptEditar(@obj.GetType().GetProperties()[0].GetValue(@obj).ToString()))">
+                            </button>
+                        }
+
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+    </table>
+    <MsgConfirmacion id="@valorEliminar"
+                     eventEliminar="EliminarDato" />
+}
+
+@code {
+
+    public string valorEliminar { get; set; }
+    public string valorEditar { get; set; }
+
+    [Parameter]
+    public bool MostrarEspera { get; set; }
+
+    [Parameter]
+    public String rtaAgregar { get; set; } = " ";
+
+    [Parameter]
+    public bool EditarOpt { get; set; }
+
+    [Parameter]
+    public bool AgregarOpt { get; set; }
+
+    [Parameter]
+    public String rtaEditar { get; set; } = " ";
+
+    [Parameter]
+    public string[] cabeceras { get; set; }
+
+    [Parameter]
+    public object[] lista { get; set; }
+
+    public string filtro { get; set; }
+
+    [Parameter]
+    public EventCallback<string> eventBusqueda { get; set; }
+
+    [Parameter]
+    public EventCallback<string> eventEliminar { get; set; }
+
+    [Parameter]
+    public EventCallback<string> eventEditar { get; set; }
+
+    public void OptEliminar(String data)
+    {
+        valorEliminar = data;
+    }
+
+    public void OptEditar(string data)
+    {
+        navManager.NavigateTo(rtaEditar + "/" + data);
+        eventEditar.InvokeAsync(data);
+    }
+
+
+    public void EditarDato(string data)
+    {
+        valorEditar = data;
+    }
+
+    public void EliminarDato(string data)
+    {
+        eventEliminar.InvokeAsync(data);
+    }
+    public void Busqueda()
+    {
+        eventBusqueda.InvokeAsync(filtro);
+    }
+
+}
+
+
+

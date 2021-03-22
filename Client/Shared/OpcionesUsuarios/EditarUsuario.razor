@@ -1,0 +1,19 @@
+﻿
+@page "/editarUsuario/{Id}"
+@using RegistroAcademicoApp.Shared
+@inject HttpClient http;
+<h1>Editar</h1>
+
+<FormularioUsuario usuarioCls=usuario />
+
+@code { [Parameter]
+    public string Id { get; set; }
+
+    public UsuarioCls usuario = new UsuarioCls();
+
+    protected async override Task OnParametersSetAsync()
+    {
+        usuario = await http.GetFromJsonAsync<UsuarioCls>("api/Usuario/obtenerUsuario/" + Id);
+
+    }
+}

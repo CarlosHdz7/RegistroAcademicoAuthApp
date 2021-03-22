@@ -1,0 +1,71 @@
+﻿@page "/ListaUsuarios"
+@using Microsoft.AspNetCore.Components.Authorization
+@using RegistroAcademicoApp.Shared
+@inject HttpClient http
+<AuthorizeView>
+    <Authorized>
+        <h3 style="color: cornflowerblue">@message</h3>
+        @code{ string[] cabecerasTabla = { "idUsuario", "nombre"}; }
+        <div class="@tipoMsg">
+            @msg
+        </div>
+        <Lista cabeceras=cabecerasTabla
+               lista=listaUsuarios
+               eventEliminar="EliminarDatos"
+               eventBusqueda="BusquedaUsuario"
+               rtaAgregar="agregarUsuario"
+               rtaEditar="editarUsuario"
+               EditarOpt="true"
+               AgregarOpt="true"
+               MostrarEspera="true" />
+    </Authorized>
+    <NotAuthorized>
+        <h3 style="color:red">@message</h3>
+    </NotAuthorized>
+</AuthorizeView>
+@code { [CascadingParameter]
+        private Task<AuthenticationState> auth { get; set; }
+
+        private string tipoMsg = "", msg = "", message = "";
+        private UsuarioCls[] listaUsuarios;
+        protected override async Task OnInitializedAsync()
+        {
+            var authuser = await auth;
+
+            var user = authuser.User;
+
+            if (user.Identity.IsAuthenticated)
+            {
+                message = "Bienvenido " + user.Identity.Name;
+            }
+            else
+            {
+                message = "No esta autenticado";
+            }
+            listaUsuarios = await http.GetFromJsonAsync<UsuarioCls[]>("api/Usuario/Get");
+        }
+
+        public async Task BusquedaUsuario(string data)
+        {
+            tipoMsg = ""; msg = "";
+            listaUsuarios = await http.GetFromJsonAsync<UsuarioCls[]>("api/Usuario/Filtrar/" + data);
+
+        }
+
+        public async Task EliminarDatos(string data)
+        {
+            int respuesta = await http.GetFromJsonAsync<int>("api/Usuario/EliminarUsuario/" + data);
+            if (respuesta == 1)
+            {
+                data = "";
+                listaUsuarios = await http.GetFromJsonAsync<UsuarioCls[]>("api/Usuario/Filtrar/" + data);
+                tipoMsg = "alert alert-primary";
+                msg = "Usuario eliminado con exito";
+            }
+            else
+            {
+                tipoMsg = "alert alert-danger";
+                msg = "Accion no pudo procesarse, es posible que el Grado ya cuente con registros";
+            }
+        } 
+}

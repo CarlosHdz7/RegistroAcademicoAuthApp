@@ -1,0 +1,91 @@
+﻿@using RegistroAcademicoApp.Shared
+@inject HttpClient http
+@using Blazored.Typeahead
+@inject IRepositorio repositorio
+@inject NavigationManager navigationManager
+
+<EditForm Model="@perfilCls" OnValidSubmit="GuardarDatos">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    @if (perfilCls.IdPerfil != 0)
+    {
+        <div class="form-group">
+            <label>Id Perfil</label>
+            <input class="form-control" readonly type="number" @bind="perfilCls.IdPerfil" />
+        </div>
+    }
+
+    <div class="form-group">
+        <label>Opcion</label>
+        <InputText class="form-check form-control"
+                   @bind-Value="perfilCls.OpcionMenu" />
+    </div>
+
+    <div class="form-group">
+        <label>Usuario</label>
+        <BlazoredTypeahead SearchMethod="buscarUsuario" @bind-Value="perfilCls.UsuarioPerfil" EnableDropDown="true" TItem="UsuarioCls" TValue="UsuarioCls">
+            <SelectedTemplate Context="ctex">
+                @ctex.idUsuario - @ctex.nombre
+            </SelectedTemplate>
+            <ResultTemplate Context="ctx">
+                @ctx.idUsuario - @ctx.nombre
+            </ResultTemplate>
+        </BlazoredTypeahead>
+    </div>
+    <input type="submit" value="Guardar" class="btn btn-primary" />
+    <NavLink href="/ListaPerfil">
+        <input type="button" value="Regresar" class="btn btn-danger" />
+    </NavLink>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public PerfilCls perfilCls { get; set; } = new PerfilCls();
+
+    public UsuarioCls[] lstUsuarios;
+    //public UsuarioCls UsuarioSelected;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        lstUsuarios= await http.GetFromJsonAsync<UsuarioCls[]>("api/Usuario/Get");
+        
+
+    }
+
+
+    public async Task GuardarDatos()
+    {
+        //perfilCls.UsuarioId = UsuarioSelected.idUsuario;
+        //perfilCls.UsuarioPerfil = UsuarioSelected;
+
+        var response = await repositorio.Post("api/Perfil/Guardar", perfilCls);
+        if (response.Error)
+        {
+            var body = await response.HttpResponseMessage.Content.ReadAsStringAsync();
+            Console.WriteLine(body);
+        }
+        else
+        {
+            navigationManager.NavigateTo("/ListaPerfil");
+        }
+
+
+
+    }
+
+    private async Task<IEnumerable<UsuarioCls>> buscarUsuario(string seachText)
+    {
+        if (!seachText.Equals(""))
+        {
+            return await Task.FromResult(lstUsuarios.Where(x => x.idUsuario.ToString().ToLower().Contains(seachText.ToLower()) || x.nombre.ToLower().Contains(seachText.ToLower())).ToList());
+        }
+        else
+        {
+            return await Task.FromResult(lstUsuarios);
+        }
+    }
+
+
+}

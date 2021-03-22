@@ -1,0 +1,103 @@
+﻿@page "/ListaPerfil"
+@using Microsoft.AspNetCore.Components.Authorization
+@using RegistroAcademicoApp.Shared
+@inject HttpClient http
+
+
+
+<AuthorizeView>
+    <Authorized>
+        <h3 style="color: cornflowerblue">@message</h3>
+        @code{
+            string[] cabecerasTabla = { "Id Perfil","IdUser", "Perfil", "Usuario", "Opciones" };
+        }
+        <div class="@tipoMsg">
+            @msg
+        </div>
+        <Lista cabeceras=cabecerasTabla
+               lista=lstPerfilUsuario
+               eventEliminar="EliminarDatos"
+               eventBusqueda="BusquedaPerfil"
+               rtaAgregar="agregarPerfil"
+               rtaEditar="editarPerfil"
+               EditarOpt="true"
+               AgregarOpt="true"
+               MostrarEspera="true" />
+    </Authorized>
+    <NotAuthorized>
+        <h3 style="color:red">@message</h3>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> auth { get; set; }
+
+    private string tipoMsg = "", msg = "", message = "";
+    public PerfilUsuario[] lstPerfilUsuario;
+    private PerfilCls[] listaPerfiles;
+    protected override async Task OnInitializedAsync()
+    {
+        var authuser = await auth;
+
+        var user = authuser.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            message = "Bienvenido " + user.Identity.Name;
+        }
+        else
+        {
+            message = "No esta autenticado";
+        }
+        listaPerfiles = await http.GetFromJsonAsync<PerfilCls[]>("api/Perfil/Get");
+        PassPerfilUsuario(listaPerfiles);
+
+
+    }
+
+    private void PassPerfilUsuario(PerfilCls[] lstPerfiles)
+    {
+        List<PerfilUsuario> lstAux = new List<PerfilUsuario>();
+        foreach (var per in lstPerfiles)
+        {
+            PerfilUsuario puser = new PerfilUsuario()
+            {
+                IPerfil=per.IdPerfil,
+                IdUsuario = per.UsuarioPerfil.idUsuario,
+                NombreUsuario = per.UsuarioPerfil.nombre,
+                Opcion = per.OpcionMenu
+            };
+            lstAux.Add(puser);
+        }
+        lstPerfilUsuario = lstAux.ToArray();
+    }
+
+    public async Task BusquedaPerfil(string data)
+    {
+        tipoMsg = ""; msg = "";
+        listaPerfiles = await http.GetFromJsonAsync<PerfilCls[]>("api/Perfil/Filtrar/" + data);
+        PassPerfilUsuario(listaPerfiles);
+    }
+
+    public async Task EliminarDatos(string data)
+    {
+        int respuesta = await http.GetFromJsonAsync<int>("api/Perfil/EliminarPerfil/" + data);
+        if (respuesta == 1)
+        {
+            data = "";
+            listaPerfiles = await http.GetFromJsonAsync<PerfilCls[]>("api/Perfil/Filtrar/" + data);
+            PassPerfilUsuario(listaPerfiles);
+            tipoMsg = "alert alert-primary";
+            msg = "Grado eliminado con exito";
+        }
+        else
+        {
+            tipoMsg = "alert alert-danger";
+            msg = "Accion no pudo procesarse, es posible que el Perfil ya cuente con registros";
+        }
+    }
+
+}

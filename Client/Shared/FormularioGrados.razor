@@ -1,0 +1,57 @@
+﻿@using RegistroAcademicoApp.Shared
+@inject HttpClient http
+@inject IRepositorio repositorio
+@inject NavigationManager navigationManager
+
+<EditForm Model="@gradoCls" OnValidSubmit="GuardarDatos">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    @if (gradoCls.GradoId != 0)
+    {
+        <div class="form-group">
+            <label>Id Grado</label>
+            <input class="form-control" readonly type="number" @bind="gradoCls.GradoId" />
+        </div>
+    }
+
+    <div class="form-group">
+        <label>Ingrese Nombre de Grado</label>
+        <InputText class="form-check form-control"
+                   @bind-Value="gradoCls.GradoNombre" />
+    </div>
+
+    <div class="form-group">
+        <label>Ingrese Seccion de Grado</label>
+        <InputText class="form form-control"
+                   @bind-Value="gradoCls.Seccion" />
+    </div>    
+    <input type="submit" value="Guardar" class="btn btn-primary" />
+    <NavLink href="/ListaGrados">
+        <input type="button" value="Regresar" class="btn btn-danger" />
+    </NavLink>
+</EditForm>
+
+
+@code {
+    [Parameter]
+    public GradoCls gradoCls { get; set; } = new GradoCls();
+    public async Task GuardarDatos()
+    {
+
+        var response = await repositorio.Post("api/Grado/Guardar", gradoCls);
+        if (response.Error)
+        {
+            var body = await response.HttpResponseMessage.Content.ReadAsStringAsync();
+            Console.WriteLine(body);
+        }
+        else
+        {
+            navigationManager.NavigateTo("/ListaGrados");
+        }
+
+    }
+
+
+
+
+}

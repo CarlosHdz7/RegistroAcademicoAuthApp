@@ -1,0 +1,78 @@
+﻿@using RegistroAcademicoApp.Shared
+@inject HttpClient http
+@using Blazored.Typeahead
+@inject IRepositorio repositorio
+@inject NavigationManager navigationManager
+
+<EditForm Model="@usuarioCls" OnValidSubmit="GuardarDatos">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    @if (usuarioCls.idUsuario != 0)
+    {
+        <div class="form-group">
+            <label>Id Usuario</label>
+            <input class="form-control" readonly type="number" @bind="usuarioCls.idUsuario" />
+        </div>
+    }
+
+    <div class="form-group">
+        <label>Nombre</label>
+        <InputText class="form-check form-control"
+                   @bind-Value="usuarioCls.nombre" />
+    </div>
+
+    <div class="form-group">
+        <label>Contraseña</label>
+        <InputText class="form-check form-control"
+                   @bind-Value="usuarioCls.pass" />
+    </div>
+
+    <input type="submit" value="Guardar" class="btn btn-primary" />
+    <NavLink href="/ListaUsuario">
+        <input type="button" value="Regresar" class="btn btn-danger" />
+    </NavLink>
+
+</EditForm>
+
+
+@code { 
+    [Parameter]
+    public UsuarioCls usuarioCls { get; set; } = new UsuarioCls();
+
+    public UsuarioCls[] lstUsuarios;
+    //public UsuarioCls UsuarioSelected;
+
+    protected override async Task OnInitializedAsync()
+    {
+        lstUsuarios = await http.GetFromJsonAsync<UsuarioCls[]>("api/Usuario/Get");
+    }
+
+    public async Task GuardarDatos()
+    {
+        //perfilCls.UsuarioId = UsuarioSelected.idUsuario;
+        //perfilCls.UsuarioPerfil = UsuarioSelected;
+
+        var response = await repositorio.Post("api/Usuario/Guardar", usuarioCls);
+        if (response.Error)
+        {
+            var body = await response.HttpResponseMessage.Content.ReadAsStringAsync();
+            Console.WriteLine(body);
+        }
+        else
+        {
+            navigationManager.NavigateTo("/ListaUsuarios");
+        }
+    }
+
+    private async Task<IEnumerable<UsuarioCls>> buscarUsuario(string seachText)
+    {
+        if (!seachText.Equals(""))
+        {
+            return await Task.FromResult(lstUsuarios.Where(x => x.idUsuario.ToString().ToLower().Contains(seachText.ToLower()) || x.nombre.ToLower().Contains(seachText.ToLower())).ToList());
+        }
+        else
+        {
+            return await Task.FromResult(lstUsuarios);
+        }
+    }
+}

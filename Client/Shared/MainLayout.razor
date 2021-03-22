@@ -1,0 +1,35 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager navigate
+@inject AuthenticationStateProvider auth;
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+    <div class="main">
+        <div class="top-row px-4">
+            <AuthorizeView>
+                <Authorized>
+                    <button @onclick="cerrarSesion" class="btn btn-danger">Cerrar Sesion</button>
+                </Authorized>
+                <NotAuthorized>
+                    <button @onclick="login" class="btn btn-primary">Login</button>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+        <div class="content px-4">
+            @Body
+        </div>
+    </div>
+</div>
+@code{
+    public void cerrarSesion()
+    {
+        ((Autenticacion)auth).cerrarSesion();
+        navigate.NavigateTo("/");
+    }
+    public void login()
+    {
+        navigate.NavigateTo("/");
+    }
+}

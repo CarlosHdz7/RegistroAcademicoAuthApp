@@ -1,0 +1,20 @@
+﻿
+@page "/editarPerfil/{Id}"
+@using RegistroAcademicoApp.Shared
+@inject HttpClient http;
+<h1>Editar</h1>
+
+<FormularioPerfil perfilCls=perfiles />
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    public PerfilCls perfiles = new PerfilCls();
+    
+    protected async override Task OnParametersSetAsync()
+    {
+        perfiles = await http.GetFromJsonAsync<PerfilCls>("api/Perfil/obtenerPerfil/" + Id);
+        
+    }
+}
